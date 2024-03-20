@@ -36,13 +36,21 @@ const (
 	RBRACE = "}"
 
 	// 关键字
-	FUNCTION = "FUNCTION"
-	LET      = "LET"
-	TRUE     = "TRUE"
-	FALSE    = "FALSE"
-	IF       = "IF"
-	ELSE     = "ELSE"
-	RETURN   = "RETURN"
+	TRUE      = "TRUE"
+	FALSE     = "FALSE"
+	BEGIN     = "BEGIN"
+	CALL      = "CALL"
+	CONST     = "CONST"
+	DO        = "DO"
+	END       = "END"
+	IF        = "IF"
+	ODD       = "ODD"
+	PROCEDURE = "RPOCEDURE"
+	READ      = "READ"
+	THEN      = "THEN"
+	VAR       = "VAR"
+	WHILE     = "WHILE"
+	WRITE     = "WRITE"
 
 	// 比较字符
 	EQ     = "=="
@@ -50,15 +58,23 @@ const (
 )
 
 var keywords = map[string]TokenType{
-	"fn":     FUNCTION,
-	"let":    LET,
-	"true":   TRUE,
-	"false":  FALSE,
-	"if":     IF,
-	"else":   ELSE,
-	"return": RETURN,
+	"true":      TRUE,
+	"false":     FALSE,
+	"if":        IF,
+	"begin":     BEGIN,
+	"call":      CALL,
+	"do":        DO,
+	"const":     CONST,
+	"end":       END,
+	"odd":       ODD,
+	"procedure": PROCEDURE,
+	"read":      READ,
+	"var":       VAR,
+	"while":     WHILE,
+	"write":     WRITE,
 }
 
+// LookupIdent 判断是不是关键字
 func LookupIdent(ident string) TokenType {
 	if tok, ok := keywords[ident]; ok {
 		return tok

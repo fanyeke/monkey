@@ -1,0 +1,9 @@
+{
+  "input": [
+    "Const num=100;\nVar a1,b2;\nBegin\nRead(A1);\nb2:=a1+num;\nwrite(A1,B2);\nEnd.",
+    "_nums;\nn_nums;\nnums_;",
+    "555yy\n444;\nyy6",
+    "a 3 b 1 a;",
+    ""
+  ]
+}

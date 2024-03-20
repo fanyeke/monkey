@@ -91,13 +91,21 @@ func (l *Lexer) NextToken() token.Token {
 		tok.Literal = ""
 		tok.Type = token.EOF
 	default:
-		if isLetter(l.ch) {
+		if isLetter(l.ch) && !isDigit(l.ch) {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
 		} else if isDigit(l.ch) {
+			tok.Literal = l.readIdentifier()
+			// 字母开头标识符非法
+			for _, v := range tok.Literal {
+				if !isDigit(byte(v)) {
+					tok.Type = token.ILLEGAL
+					return tok
+				}
+			}
+			// 全是数字则为整数
 			tok.Type = token.INT
-			tok.Literal = l.readNumber()
 			return tok
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
@@ -115,7 +123,7 @@ func newToken(tokenType token.TokenType, ch byte) token.Token {
 	}
 }
 
-// readIdentifier 读入一个标识符
+// readIdentifier 去整个单词
 func (l *Lexer) readIdentifier() string {
 	/*
 		先记录当前的位置
@@ -148,7 +156,7 @@ func isDigit(ch byte) bool {
 }
 
 func isLetter(ch byte) bool {
-	return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || (ch == '_')
+	return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9')
 }
 
 func (l *Lexer) peekChar() byte {
