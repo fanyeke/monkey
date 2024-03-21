@@ -7,15 +7,38 @@ import (
 	"github.com/fanyeke/monkey/token"
 )
 
+// parser/parser.go
+
+const (
+	_ int = iota
+	LOWEST
+	EQUALS      // ==
+	LESSGREATER // > or <
+	SUM         // +
+	PRODUCT     // *
+	PREFIX      // -X or !X
+	CALL        // myFunction(X)
+)
+
+// 定义两种类型的函数: 前缀解析函数和中缀解析函数
+// 两个函数均返回 ast.Expression
+type (
+	prefixParseFn func() ast.Expression
+	infixParseFn  func(ast.Expression) ast.Expression
+)
+
 type Parser struct {
-	l *lexer.Lexer // Parser 内联了 lexer.Lexer , Lexer 持有着输入的字符串
+	l      *lexer.Lexer // Parser 内联了 lexer.Lexer , Lexer 持有着输入的字符串
+	errors []string
+
 	// curToken 和 peekToken 的性质与Lexer中的当前字符和下一个字符相同, 但是它们指向的是当前词法单元和下一个词法单元
 	// 原因是有可能 curToken 没有提供足够的信息, 需要下一个词法单元 peekToken 来提供
 	// 例如: 读到了 5 ,这时就需要确定是一行的末尾还是算数表达式的开头
 	curToken  token.Token
 	peekToken token.Token
 
-	errors []string
+	prefixParseFns map[token.TokenType]prefixParseFn
+	infixParseFns  map[token.TokenType]infixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -23,6 +46,8 @@ func New(l *lexer.Lexer) *Parser {
 		l:      l,
 		errors: []string{},
 	}
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	// 向后读取两个词法单元, 根据这两个词法单元设置 curToken 和 peekToken
 	p.nextToken()
 	p.nextToken()
@@ -52,7 +77,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 	// 遍历输入每个词法单元, 直到文件结尾 token.EOF
 	for p.curToken.Type != token.EOF {
-		stmt := p.ParseStatement()
+		stmt := p.parseStatement()
 		// 如果不是 nil 就插入到根节点的 program.Statements 切片中
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
@@ -63,14 +88,17 @@ func (p *Parser) ParseProgram() *ast.Program {
 }
 
 // ParseStatement 词法单元类型分支, 返回 ast.Statement 节点
-func (p *Parser) ParseStatement() ast.Statement {
+func (p *Parser) parseStatement() ast.Statement {
 	// 词法单元的类型如果在分支中就执行对应函数, 否则返回nil
 	switch p.curToken.Type {
 	case token.LET:
 		// 如果是 LET 类型就执行
 		return p.parseLetStatement()
+	case token.RETURN:
+		return p.parseReturnStatement()
 	default:
-		return nil
+
+		return p.parseExpressionStatement()
 	}
 }
 
@@ -122,5 +150,53 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 		return true
 	} else {
 		return false
+	}
+}
+
+func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	stmt := &ast.ReturnStatement{
+		Token: p.curToken,
+	}
+	p.nextToken()
+
+	// TODO: 跳过对表达式的处理，直到遇到分号
+
+	for !p.curTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return stmt
+}
+
+func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tokenType] = fn
+}
+
+func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tokenType] = fn
+}
+
+func (p *Parser) parseExpressionStatement() ast.Statement {
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParseFns[p.curToken.Type]
+	if prefix == nil {
+		return nil
+	}
+	leftExp := prefix()
+	return leftExp
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{
+		Token: p.curToken,
+		Value: p.curToken.Literal,
 	}
 }
