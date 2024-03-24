@@ -1,0 +1,38 @@
+Test Case 1:
+const a=10;
+var b,c;
+begin
+read(b);
+c:=a+b;
+write(c)
+end.
+
+Type		Literal
+CONST		const
+IDENT		a
+=		=
+INT		10
+;		;
+VAR		var
+IDENT		b
+,		,
+IDENT		c
+;		;
+BEGIN		begin
+READ		read
+(		(
+IDENT		b
+)		)
+;		;
+IDENT		c
+:=		:=
+IDENT		a
++		+
+IDENT		b
+;		;
+WRITE		write
+(		(
+IDENT		c
+)		)
+END		end
+.		.

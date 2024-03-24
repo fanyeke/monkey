@@ -1,6 +1,8 @@
 package lexer
 
-import "github.com/fanyeke/monkey/token"
+import (
+	"github.com/fanyeke/monkey/token"
+)
 
 type Lexer struct {
 	input        string
@@ -70,14 +72,48 @@ func (l *Lexer) NextToken() token.Token {
 	case '*':
 		tok = newToken(token.ASTERISK, l.ch)
 	case '<':
-		tok = newToken(token.LT, l.ch)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{
+				Type:    token.LEQ,
+				Literal: literal,
+			}
+		} else {
+			tok = newToken(token.LT, l.ch)
+		}
 	case '>':
-		tok = newToken(token.GT, l.ch)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{
+				Type:    token.GEQ,
+				Literal: literal,
+			}
+		} else {
+			tok = newToken(token.GT, l.ch)
+		}
+	case ':':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{
+				Type:    token.BECOMES,
+				Literal: literal,
+			}
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
 		// 分隔符
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case ',':
 		tok = newToken(token.COMMA, l.ch)
+	case '.':
+		tok = newToken(token.PERIOD, l.ch)
 		// 括号
 	case '(':
 		tok = newToken(token.LPAREN, l.ch)
@@ -87,6 +123,12 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
+	case '#':
+		tok = newToken(token.REQ, l.ch)
+	case '"':
+		tok.Type = token.STRING
+		tok.Literal = l.readString()
+
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -156,4 +198,15 @@ func (l *Lexer) peekChar() byte {
 		return 0
 	}
 	return l.input[l.readPosition]
+}
+
+func (l *Lexer) readString() string {
+	position := l.position + 1
+	for {
+		l.readChar()
+		if l.ch == '"' || l.ch == 0 {
+			break
+		}
+	}
+	return l.input[position:l.position]
 }

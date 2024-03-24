@@ -23,12 +23,16 @@ const (
 	ASTERISK = "*"
 	SLASH    = "/"
 
-	LT = "<"
-	GT = ">"
-
+	LT      = "<"
+	GT      = ">"
+	LEQ     = "<="
+	GEQ     = ">="
+	BECOMES = ":="
+	REQ     = "#"
 	// 分隔符
 	COMMA     = ","
 	SEMICOLON = ";"
+	PERIOD    = "."
 
 	LPAREN = "("
 	RPAREN = ")"
@@ -36,27 +40,41 @@ const (
 	RBRACE = "}"
 
 	// 关键字
-	FUNCTION = "FUNCTION"
-	LET      = "LET"
-	TRUE     = "TRUE"
-	FALSE    = "FALSE"
-	IF       = "IF"
-	ELSE     = "ELSE"
-	RETURN   = "RETURN"
+	BEGIN     = "BEGIN"
+	CALL      = "CALL"
+	CONST     = "CONST"
+	DO        = "DO"
+	END       = "END"
+	IF        = "IF"
+	ODD       = "ODD"
+	PROCEDURE = "PROCEDURE"
+	READ      = "READ"
+	THEN      = "THEN"
+	VAR       = "VAR"
+	WHILE     = "WHILE"
+	WRITE     = "WRITE"
 
 	// 比较字符
 	EQ     = "=="
 	NOT_EQ = "!="
+
+	STRING = "STRING"
 )
 
 var keywords = map[string]TokenType{
-	"fn":     FUNCTION,
-	"let":    LET,
-	"true":   TRUE,
-	"false":  FALSE,
-	"if":     IF,
-	"else":   ELSE,
-	"return": RETURN,
+	"if":        IF,
+	"begin":     BEGIN,
+	"call":      CALL,
+	"const":     CONST,
+	"do":        DO,
+	"end":       END,
+	"odd":       ODD,
+	"procedure": PROCEDURE,
+	"read":      READ,
+	"then":      THEN,
+	"while":     WHILE,
+	"write":     WRITE,
+	"var":       VAR,
 }
 
 func LookupIdent(ident string) TokenType {
