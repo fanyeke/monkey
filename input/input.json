@@ -1,0 +1,5 @@
+{
+  "testCases": [
+    "var a=1;\nvar b=2;\n(a+15)*b;"
+  ]
+}

@@ -24,7 +24,6 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalProgram(node, env) // 语句
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env) // 表达式
-
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value} // 整数字面量
 	case *ast.Boolean:
@@ -229,7 +228,7 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	// 左右部分都是整数
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
-	// 符号是"==" ro "!="
+	// 符号是"==" or "!="
 	case operator == "==":
 		return nativeBoolToBooleanObject(left == right)
 	case operator == "!=":
@@ -240,7 +239,7 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
 		return evalStringInfixExpression(operator, left, right)
 	default:
-		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+		return newError("[evalInfixExpression] unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -266,8 +265,12 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 		return nativeBoolToBooleanObject(leftVal == rightVal)
 	case "!=":
 		return nativeBoolToBooleanObject(leftVal != rightVal)
+	case ">=":
+		return nativeBoolToBooleanObject(leftVal >= rightVal)
+	case "<=":
+		return nativeBoolToBooleanObject(leftVal <= rightVal)
 	default:
-		return newError("unknown operator:%s %s %s", left.Type(), operator, right.Type())
+		return newError("[evalIntegerInfixExpression] unknown operator:%s %s %s", left.Type(), operator, right.Type())
 	}
 }
 

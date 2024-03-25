@@ -70,9 +70,29 @@ func (l *Lexer) NextToken() token.Token {
 	case '*':
 		tok = newToken(token.ASTERISK, l.ch)
 	case '<':
-		tok = newToken(token.LT, l.ch)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{
+				Type:    token.LEQ,
+				Literal: literal,
+			}
+		} else {
+			tok = newToken(token.LT, l.ch)
+		}
 	case '>':
-		tok = newToken(token.GT, l.ch)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{
+				Type:    token.GEQ,
+				Literal: literal,
+			}
+		} else {
+			tok = newToken(token.GT, l.ch)
+		}
 		// 分隔符
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
@@ -132,7 +152,7 @@ func (l *Lexer) readIdentifier() string {
 		返回这个标识符
 	*/
 	position := l.position
-	for isLetter(l.ch) {
+	for isLetterOrNumber(l.ch) {
 		l.readChar()
 	}
 	return l.input[position:l.position]
@@ -158,6 +178,10 @@ func isDigit(ch byte) bool {
 
 func isLetter(ch byte) bool {
 	return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || (ch == '_')
+}
+
+func isLetterOrNumber(ch byte) bool {
+	return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || (ch == '_') || ('0' <= ch && ch <= '9')
 }
 
 func (l *Lexer) peekChar() byte {
