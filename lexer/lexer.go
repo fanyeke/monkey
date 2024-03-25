@@ -78,6 +78,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.SEMICOLON, l.ch)
 	case ',':
 		tok = newToken(token.COMMA, l.ch)
+	case ':':
+		tok = newToken(token.COLON, l.ch)
 		// 括号
 	case '(':
 		tok = newToken(token.LPAREN, l.ch)
@@ -87,6 +89,13 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
+	case '[':
+		tok = newToken(token.LBRACKET, l.ch)
+	case ']':
+		tok = newToken(token.RBRACKET, l.ch)
+	case '"':
+		tok.Type = token.STRING
+		tok.Literal = l.readString()
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -156,4 +165,19 @@ func (l *Lexer) peekChar() byte {
 		return 0
 	}
 	return l.input[l.readPosition]
+}
+
+// readString 读取字符串
+func (l *Lexer) readString() string {
+	// position 记录字符串开始的位置
+	position := l.position + 1
+	for {
+		// 往后读取, 直到'""'或结束
+		l.readChar()
+		if l.ch == '"' || l.ch == 0 {
+			break
+		}
+	}
+	// 拼接返回读取到的字符串(不包括引号)
+	return l.input[position:l.position]
 }
