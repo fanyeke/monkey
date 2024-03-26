@@ -165,12 +165,14 @@ func (l *Lexer) readIdentifier() string {
 		返回这个标识符
 	*/
 	position := l.position
-	for isLetter(l.ch) {
+	for isLetterOrNumber(l.ch) {
 		l.readChar()
 	}
 	return l.input[position:l.position]
 }
-
+func isLetterOrNumber(ch byte) bool {
+	return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || (ch == '_') || ('0' <= ch && ch <= '9')
+}
 func (l *Lexer) skipWhitespace() {
 	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
 		l.readChar()
