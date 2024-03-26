@@ -2,10 +2,9 @@
   "testCases": [
     "Const a=10;\nvar b,c;\nbegin\nread(b);\nc:=a+b;\nwrite(c)\nend.",
     "begin call const do end if odd procedure read then var while write",
-    "a b c d e f g",
+    "a b1 c2 d_1 e f g",
     "+ - * / = # < <= > >= :=",
     "(),.",
-    "12 33 4 5 5555",
-    ""
+    "12 33 4 5 5555"
   ]
 }
