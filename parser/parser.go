@@ -8,6 +8,11 @@ import (
 	"strconv"
 )
 
+/*
+parser的职责:
+1. 必要时确定词法单元的优先级
+*/
+
 // 这些常量是用来区分运算符优先级的
 const (
 	_ int = iota
@@ -23,18 +28,18 @@ const (
 
 // precedences 中缀解析需要的一些符号和优先级的映射表
 var precedences = map[token.TokenType]int{
-	token.EQ:       EQUALS,
-	token.NOT_EQ:   EQUALS,
-	token.LT:       LESSGREATER,
-	token.GT:       LESSGREATER,
-	token.LEQ:      LESSGREATER, //"<="
-	token.GEQ:      LESSGREATER, //">="
-	token.PLUS:     SUM,
-	token.MINUS:    SUM,
-	token.SLASH:    PRODUCT,
-	token.ASTERISK: PRODUCT,
-	token.LPAREN:   CALL,
-	token.LBRACKET: INDEX,
+	token.EQ:       EQUALS,      // ==
+	token.NOT_EQ:   EQUALS,      // !=
+	token.LT:       LESSGREATER, // <
+	token.GT:       LESSGREATER, // >
+	token.LEQ:      LESSGREATER, // <=
+	token.GEQ:      LESSGREATER, // >=
+	token.PLUS:     SUM,         // +
+	token.MINUS:    SUM,         // -
+	token.SLASH:    PRODUCT,     // /
+	token.ASTERISK: PRODUCT,     // *
+	token.LPAREN:   CALL,        // (
+	token.LBRACKET: INDEX,       // [
 }
 
 // 定义两种类型的函数: 前缀解析函数和中缀解析函数
@@ -43,6 +48,10 @@ type (
 	prefixParseFn func() ast.Expression
 	infixParseFn  func(ast.Expression) ast.Expression
 )
+
+// Parser token解析器-词法单元解析器
+// Parser 相当于 Lexer 字符解析器的再一层等装, 目的在于模块化层次化项目
+// Parser 包含这样几部分: 1. Lexer 2. 前缀中缀解析映射函数 3. 当前和下一个token 4. 错误信息
 type Parser struct {
 	l      *lexer.Lexer // Parser 内联了 lexer.Lexer , Lexer 持有着输入的字符串
 	errors []string
@@ -58,11 +67,18 @@ type Parser struct {
 	infixParseFns  map[token.TokenType]infixParseFn
 }
 
+// New 初始化一个 Parser, 传入参数是Lexer, 职责是初始化errors和注册解析函数
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
 		l:      l,
 		errors: []string{},
 	}
+	/*
+		以下是一些解析函数, 这里介绍一下为什么需要前缀和中缀解析:
+		对于单个token, 例如标识符,整形,运算符等进行前缀解析, 也即按照输入的顺序识别
+		对于运算表达式, 例如+-*或者== !=等我们需要按照不同的优先级, 遵循一定的规则读入
+		因此使用两种解析方式
+	*/
 	// 初始化解析函数的映射map
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	// 注册前缀解析函数
@@ -110,25 +126,11 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
-func (p *Parser) Errors() []string {
-	return p.errors
-}
-
-func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s install", t, p.peekToken.Type)
-	p.errors = append(p.errors, msg)
-}
-
-func (p *Parser) nextToken() {
-	p.curToken = p.peekToken
-	p.peekToken = p.l.NextToken()
-}
-
 // ParseProgram 普拉特解析方法入口
 func (p *Parser) ParseProgram() *ast.Program {
 	// 构造AST的根节点
 	program := &ast.Program{}
-	program.Statements = []ast.Statement{}
+	program.Statements = []ast.Statement{} // 因为ast没有设计New方法, 这里对ast进行初始化
 
 	// 遍历输入每个词法单元, 直到文件结尾 token.EOF
 	for p.curToken.Type != token.EOF {
@@ -142,10 +144,28 @@ func (p *Parser) ParseProgram() *ast.Program {
 	return program
 }
 
-// ParseStatement 词法单元类型分支, 返回 ast.Statement 节点
+// Errors 返回错误
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
+// peekError 下一个token的错误
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s install", t, p.peekToken.Type)
+	p.errors = append(p.errors, msg)
+}
+
+// nextToken 移动token指针
+func (p *Parser) nextToken() {
+	p.curToken = p.peekToken
+	p.peekToken = p.l.NextToken()
+}
+
+// parseStatement 词法单元类型分支, 返回 ast.Statement 节点
 func (p *Parser) parseStatement() ast.Statement {
 	// 词法单元的类型如果在分支中就执行对应函数, 否则返回nil
 	switch p.curToken.Type {
+	// TODO 我的理解是与变量有关的因为涉及到更多操作, 这里对他们进行单独处理
 	case token.LET:
 		// 如果是 LET 类型就执行
 		return p.parseLetStatement()
@@ -157,6 +177,19 @@ func (p *Parser) parseStatement() ast.Statement {
 
 		return p.parseExpressionStatement()
 	}
+}
+
+// parseExpressionStatement
+func (p *Parser) parseExpressionStatement() ast.Statement {
+	defer untrace(trace("parseExpressionStatement"))
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
+	// TODO 为什么初始传入的优先级都是LOWEST
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return stmt
 }
 
 // parseLetStatement 解析 LET 主要函数
@@ -235,18 +268,6 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
 }
 
-// parseExpressionStatement
-func (p *Parser) parseExpressionStatement() ast.Statement {
-	defer untrace(trace("parseExpressionStatement"))
-	stmt := &ast.ExpressionStatement{Token: p.curToken}
-	stmt.Expression = p.parseExpression(LOWEST)
-
-	if p.peekTokenIs(token.SEMICOLON) {
-		p.nextToken()
-	}
-	return stmt
-}
-
 // parseExpression 检查前缀位置是否有对应类型的解析函数, 传入参数为优先级
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	defer untrace(trace("parseExpression"))
@@ -284,11 +305,11 @@ func (p *Parser) parseIdentifier() ast.Expression {
 // parseIntegerLiteral 解析整数
 func (p *Parser) parseIntegerLiteral() ast.Expression {
 	defer untrace(trace("parseIntegerLiteral"))
-	lit := &ast.IntegerLiteral{
+	lit := &ast.IntegerLiteral{ // 创建整数节点Expression
 		Token: p.curToken,
 	}
 
-	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64) // 字符串转为整数类型
 	if err != nil {
 		msg := fmt.Sprintf("cound not parse %q as integer.", p.curToken.Literal)
 		p.errors = append(p.errors, msg)

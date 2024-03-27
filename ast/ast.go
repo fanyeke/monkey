@@ -6,6 +6,15 @@ import (
 	"strings"
 )
 
+/*
+ast是定义一些需要挂在语法解析树上的单元
+首先可以先来看两个接口 Statement 和 Expression,
+他们两个就是为了规范一些节点的实现, 他们也把节点分为了两类节点:
+一类是 Statement 节点, 可以理解为是语句, 我们可以看一些他的实现, 例如 LetStatement(VarStatement) 就是let(var) x = 1这一条语句的节点
+另一类是 Expression 节点, 可以理解为是表达式, 不仅指算数表达式, "x"也是一个表达式(Identifier),
+因此AST语法解析树的解构就明晰了: 每一次输入会产生一颗AST语法解析树, 叶子节点都是表达式, 语句是关联叶子节点的整体
+*/
+
 // Node AST每个几点都需要实现Node接口
 type Node interface {
 	// TokenLiteral 方法返回与节点相关联词法单元的字面量,仅用于调试和测试
@@ -15,13 +24,13 @@ type Node interface {
 	String() string
 }
 
-// Statement 实现了Node的结构体
+// Statement 语句实现了Node的结构体
 type Statement interface {
 	Node
 	statementNode()
 }
 
-// Expression 实现了Node的结构体
+// Expression 表达式实现了Node的结构体
 type Expression interface {
 	Node
 	expressionNode()

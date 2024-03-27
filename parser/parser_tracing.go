@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -14,7 +15,7 @@ func identLevel() string {
 
 func tracePrint(fs string) {
 	// TODO 启用追踪
-	//fmt.Printf("%s%s\n", identLevel(), fs)
+	fmt.Printf("%s%s\n", identLevel(), fs)
 }
 
 func incIdent() { traceLevel = traceLevel + 1 }

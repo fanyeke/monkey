@@ -89,6 +89,7 @@ var keywords = map[string]TokenType{
 	"read":      READ,
 	"while":     WHILE,
 	"write":     WRITE,
+	"then":      THEN,
 }
 
 func LookupIdent(ident string) TokenType {

@@ -24,8 +24,8 @@ func Start(in io.Reader, out io.Writer) {
 		}
 		// 每次取一行, 每一行都建立一颗 ast 树, 进行解释
 		line := scanner.Text()
-		l := lexer.New(line)
-		p := parser.New(l)
+		l := lexer.New(line) // lexer 字符解析器
+		p := parser.New(l)   // 词法单元解析器
 		// 建树
 		program := p.ParseProgram()
 		fmt.Println(program.String())
