@@ -1,6 +1,14 @@
 # monkey
 ## 1 项目简介
 monkey是一个由go语言实现的一个解释器，初衷是完成课程作业，主要的逻辑在主分支，作业的实现在lab分支中，lab3/4为完全体。
+效果展示：
+```
+test case 10:
+((8 * (5 - 3)) + 2) / 2
+
+(((8 * (5 - 3)) + 2) / 2)
+9
+```
 ## 2 实验环境
 
 - 操作系统：Windows11
@@ -136,7 +144,8 @@ type Lexer struct {
 
 default分支基本：
 
-![image-20240325222408805](C:\Users\sln\AppData\Roaming\Typora\typora-user-images\image-20240325222408805.png)
+![image](https://github.com/fanyeke/monkey/assets/113885744/d0077a2f-87c9-488d-a1f3-f0d06d59a2ed)
+
 
 ```
 // NextToken 读取一下个token,可以理解为把读取的单个字符加工包装上类型
@@ -233,7 +242,8 @@ func (l *Lexer) NextToken() token.Token {
 
 语法分析使用的是普拉特解析方法，这种方法要求我们建立出一颗语法分洗树，例如(1+2)*3这个表达式，我们需要建立出这样一棵语法分析树（省略了括号的表示）：
 
-![image-20240326204445055](C:\Users\sln\AppData\Roaming\Typora\typora-user-images\image-20240326204445055.png)
+![image](https://github.com/fanyeke/monkey/assets/113885744/328510b1-31ec-40fb-9e4d-83cce22d113b)
+
 
 目的是为了确定语句的指向关系和执行关系，我们可以先对ast进行分析，首先对于一棵树，我们需要对树的节点进行定义，不同的节点有不同的数据结构，比如：对于var关键字，它就需要至少left表示变量和right表示表达式；对于运算符，left和right都是表达式。针对于不同的节点，我们可以抽象出来两类节点接口，分别是语句和表达式，语句不会产生值，表达式会产生值，由此我们声明两个接口
 
@@ -378,7 +388,8 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 最后以(1+2)*3的解析为例， 可以看一下整个的解析过程：
 
-![image-20240327104729856](C:\Users\sln\AppData\Roaming\Typora\typora-user-images\image-20240327104729856.png)
+![image](https://github.com/fanyeke/monkey/assets/113885744/20b847b1-75d7-49d7-8cf6-d25ca1187921)
+
 
 ### 3.8 求值
 
@@ -431,3 +442,83 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 **内置函数**
 
 实现了一些内置函数，实现逻辑主要是利用一个映射map，检测到标识符会先看看是不是是不是内置函数，如果是就执行函数的逻辑，值得一提的是代码中变量名的判定在内置函数之前，也就是说我们设定一个内置函数len，依旧可以重新定义一个名为len的变量，在此次运行中将不会调用len函数。
+### 3.10 测试样例
+
+```
+test case 1:
+var a=1;
+var b=2;
+(a+15)*b;
+
+var a = 1;var b = 2;((a + 15) * b)
+32
+-------------
+
+test case 2:
+1+2+3+4+5;
+
+((((1 + 2) + 3) + 4) + 5)
+15
+-------------
+
+test case 3:
+(1+2)*3;
+
+((1 + 2) * 3)
+9
+-------------
+
+test case 4:
+(3+(1-2))-9/3
+
+((3 + (1 - 2)) - (9 / 3))
+-1
+-------------
+
+test case 5:
+var x=1;
+var y=2;
+var z=3;(x+y)*z;
+
+var x = 1;var y = 2;var z = 3;((x + y) * z)
+9
+-------------
+
+test case 6:
+(20 / (4 + (2 * 3))) * 2
+
+((20 / (4 + (2 * 3))) * 2)
+4
+-------------
+
+test case 7:
+-1-2
+
+((-1) - 2)
+-3
+-------------
+
+test case 8:
+2+3*5
+
+(2 + (3 * 5))
+17
+-------------
+
+test case 9:
+((3 + 4) * 2) / 5
+
+(((3 + 4) * 2) / 5)
+2
+-------------
+
+test case 10:
+((8 * (5 - 3)) + 2) / 2
+
+(((8 * (5 - 3)) + 2) / 2)
+9
+-------------
+```
+
+|      |
+| ---- |
