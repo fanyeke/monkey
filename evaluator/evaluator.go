@@ -4,7 +4,23 @@ import (
 	"fmt"
 	"github.com/fanyeke/monkey/ast"
 	"github.com/fanyeke/monkey/object"
+	"strconv"
 )
+
+type Quadruple struct {
+	Operator string
+	Arg1     string
+	Arg2     string
+	Result   string
+}
+
+// 用于生成临时变量的计数器
+var tempCount int
+
+func generateTemp() string {
+	tempCount++
+	return fmt.Sprintf("t%d", tempCount)
+}
 
 var (
 	TRUE  = &object.Boolean{Value: true}
@@ -12,9 +28,79 @@ var (
 	NULL  = &object.NULL{}
 )
 
+//var Quads *[]Quadruple
+
+func init() {
+	//Quads = new([]Quadruple)
+}
+
+var TempVarCount int
+
+func GenerateIntermediateCode(node ast.Node) []string {
+	var code []string
+	switch node := node.(type) {
+	case *ast.Program:
+		evalMidProgram(node)
+	case *ast.ExpressionStatement:
+		return GenerateIntermediateCode(node.Expression) // 表达式
+	case *ast.InfixExpression:
+		// 递归生成左右子树的代码
+		leftCode := GenerateIntermediateCode(node.Left)
+		rightCode := GenerateIntermediateCode(node.Right)
+		code = append(code, leftCode...)
+		code = append(code, rightCode...)
+
+		// 生成当前中缀表达式的四元式
+		node.TempVar = newTempVar() // 为这个中缀表达式生成一个新的临时变量
+		code = append(code, formatQuad(node.Operator, extractOperand(node.Left), extractOperand(node.Right), node.TempVar))
+		//fmt.Println(code)
+
+	default:
+		// 其他类型节点的处理逻辑
+	}
+	return code
+}
+
+// evalProgram 解析语句, 本质是沿着ast树往下递归
+func evalMidProgram(program *ast.Program) object.Object {
+	var result object.Object
+	// 解析语句中的每一项
+	for _, statement := range program.Statements {
+		GenerateIntermediateCode(statement)
+	}
+	return result
+}
+
+// newTempVar 生成新的临时变量
+func newTempVar() string {
+	TempVarCount++
+	return fmt.Sprintf("t%d", TempVarCount)
+}
+
+// formatQuad 格式化输出四元式
+func formatQuad(op string, arg1, arg2, result string) string {
+	return fmt.Sprintf("(%s, %s, %s, %s)", op, arg1, arg2, result)
+}
+
+// extractOperand 提取操作数
+func extractOperand(node ast.Node) string {
+	switch n := node.(type) {
+	case *ast.IntegerLiteral:
+		return strconv.FormatInt(n.Value, 10)
+	case *ast.Identifier:
+		return n.Value
+	case *ast.InfixExpression:
+		return n.TempVar
+	default:
+		return ""
+	}
+}
+
 // Eval 树遍历解释器, Eval 将 ast.Node 作为输入并返回一个 object.Object
 // 不同ast节点的求值方式不同
 func Eval(node ast.Node, env *object.Environment) object.Object {
+	// 存储中间代码
+	// 中间代码的格式为: 操作符 操作数1 操作数2 结果
 	switch node := node.(type) {
 	/*
 		1. 语句和表达式的本质都是沿着ast树往下递归
@@ -224,6 +310,7 @@ func valMinusPrefixOperatorExpression(right object.Object) object.Object {
 
 // evalInfixExpression 解析中缀表达式
 func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+
 	switch {
 	// 左右部分都是整数
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
@@ -247,6 +334,9 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 func evalIntegerInfixExpression(operator string, left object.Object, right object.Object) object.Object {
 	leftVal := left.(*object.Integer).Value
 	rightVal := right.(*object.Integer).Value
+	//result := &object.Integer{}
+	//
+	//tempVar := generateTemp()
 
 	switch operator {
 	case "+":
@@ -254,8 +344,12 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 	case "-":
 		return &object.Integer{Value: leftVal - rightVal}
 	case "*":
+		//result.Value = leftVal * rightVal
+		//*quads = append(*quads, Quadruple{Operator: "*", Arg1: fmt.Sprint(leftVal), Arg2: fmt.Sprint(rightVal), Result: tempVar})
 		return &object.Integer{Value: leftVal * rightVal}
 	case "/":
+		//result.Value = leftVal / rightVal
+		//*quads = append(*quads, Quadruple{Operator: "/", Arg1: fmt.Sprint(leftVal), Arg2: fmt.Sprint(rightVal), Result: tempVar})
 		return &object.Integer{Value: leftVal / rightVal}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)

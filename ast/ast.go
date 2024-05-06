@@ -195,6 +195,10 @@ type InfixExpression struct {
 	Left     Expression
 	Operator string
 	Right    Expression
+
+	// 中间代码表达式
+	Quads   string
+	TempVar string
 }
 
 func (ie *InfixExpression) expressionNode() {

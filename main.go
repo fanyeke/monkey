@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/fanyeke/monkey/evaluator"
 	"github.com/fanyeke/monkey/lexer"
-	"github.com/fanyeke/monkey/object"
 	"github.com/fanyeke/monkey/parser"
 	"github.com/fanyeke/monkey/repl"
 	"os"
@@ -27,7 +26,7 @@ func main() {
 func readFromJSON() {
 	test := testJSON{}
 	file, err := os.ReadFile("input/input.json")
-	env := object.NewEnvironment()
+	//env := object.NewEnvironment()
 	if err != nil {
 		panic(err)
 	}
@@ -45,10 +44,15 @@ func readFromJSON() {
 		p := parser.New(l)
 		program := p.ParseProgram()
 		out.WriteString(program.String())
-		evaluated := evaluator.Eval(program, env)
-		if evaluated != nil {
-			out.WriteString("\n" + evaluated.Inspect() + "\n")
-		}
+		//evaluated := evaluator.Eval(program, env)
+		evaluator.TempVarCount = 0
+
+		code := evaluator.GenerateIntermediateCode(program.Statements[0])
+
+		out.WriteString(fmt.Sprintf("\nIntermediate Code:\n%s\n\n", code))
+		//if evaluated != nil {
+		//	out.WriteString("\n" + evaluated.Inspect() + "\n")
+		//}
 		out.WriteString("-------------\n\n")
 	}
 	err = os.WriteFile("json_out.txt", out.Bytes(), 0775)
@@ -61,7 +65,7 @@ func readFromTxt() {
 	out := bytes.Buffer{}
 	// 读取文本文件
 	file, err := os.ReadFile("input.txt")
-	env := object.NewEnvironment()
+	//env := object.NewEnvironment()
 
 	if err != nil {
 		panic(err)
@@ -74,10 +78,10 @@ func readFromTxt() {
 	p := parser.New(l)
 	program := p.ParseProgram()
 	out.WriteString(program.String())
-	evaluated := evaluator.Eval(program, env)
-	if evaluated != nil {
-		out.WriteString("\n" + evaluated.Inspect() + "\n")
-	}
+	//evaluated := evaluator.Eval(program, env)
+	evaluator.TempVarCount = 0
+	code := evaluator.GenerateIntermediateCode(program.Statements[0])
+	out.WriteString(fmt.Sprintf("\nIntermediate Code:\n%s\n\n", code))
 	err = os.WriteFile("txt_out.txt", out.Bytes(), 0775)
 	if err != nil {
 		panic(err)
